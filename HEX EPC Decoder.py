@@ -11,12 +11,12 @@ from epcutils import binary2epctaguri, epcpureidentityuri2gs1element, epctaguri2
 ### Start of conversion ###
 # Process CSV to convert HEX EPCs to all other formats
 # Output is written to results.csv
-def convert(inputfile):        
+def convert():        
     try:        
-        with open(inputfile) as csvdatei:
-            csvReader = csv.reader(csvdatei, delimiter=delimiter)
+        with open(filename.get()) as csvdatei:
+            csvReader = csv.reader(csvdatei, delimiter=delimiter.get())
             with open("results.csv",'w', newline='') as outputFile:
-                    csvWriter = csv.writer(outputFile, delimiter=delimiter)
+                    csvWriter = csv.writer(outputFile, delimiter=delimiter.get())
                     
                     for n, row in enumerate(csvReader):
                         # Check for empty row
@@ -28,11 +28,11 @@ def convert(inputfile):
                             # Write header line for output file
                             csvWriter.writerow(["HEX EPC","EPC Tag URI","EPC Pure Identity URI","GS1 Element String"])
                             # If source file has headers, skip first row
-                            if hasheaders:
+                            if hasheaders.get():
                                 continue
                         
                         # Convert Hex to Binary
-                        hexEPC = row[column-1]
+                        hexEPC = row[int(column.get())-1]
                         binary = hex2binary(hexEPC)
                         
                         # Check for SGTIN-96 Coding Scheme (only supported scheme atm)
@@ -50,7 +50,7 @@ def convert(inputfile):
                     # Show info that conversion is complete
                     messagebox.showinfo(message="HEX EPC Conversion complete!")
     except:
-        messagebox.showerror(title = "Excpetion", message="An error occurred, please check your input values and retry!")
+        messagebox.showerror(title = "Exception", message="An error occurred, please check your input values and retry!")
 
 # Function to open the CSV file
 def open_file():
@@ -59,7 +59,7 @@ def open_file():
 ### User Input ###
 # Open main window
 root = Tk()
-root.geometry("600x400")
+#root.geometry("600x400")
 root.resizable(False,False)
 root.title("EPC HEX Decoder")
 
@@ -67,18 +67,54 @@ root.title("EPC HEX Decoder")
 mainframe = ttk.Frame(root, padding=10)
 mainframe.grid()
 
-# Select CSV File
-csvlabelframe = ttk.LabelFrame(mainframe, text="CSV").grid(row=0, column=0, sticky=(E, W),columnspan=2)
+# Input CSV File
+fileframe = ttk.LabelFrame(mainframe, text="CSV File:", padding=10)
+fileframe.grid(row=0, column=0, columnspan=2)
+
 filename = StringVar()
-csventry = ttk.Entry(csvlabelframe, textvariable=filename, state=DISABLED)
-csventry.grid(row=0, column=0)
+csventry = ttk.Entry(fileframe, textvariable=filename, width=60, state=DISABLED)
+csventry.grid(row=0, column=0, sticky=EW, padx=10, pady=5)
 
+csvopendialogbutton = ttk.Button(fileframe, text="Select file", command=open_file)
+csvopendialogbutton.grid(row=0, column=1, sticky=E)
 
-csvopendialogbutton = ttk.Button(csvlabelframe, text="Select File", command=open_file)
-csvopendialogbutton.grid(row=0, column=1)
+# Input if CSV has Headers
+headerframe = ttk.LabelFrame(mainframe, text="Has the CSV headers?:", padding=10)
+headerframe.grid(row=1, column=0, sticky=W, rowspan=2)
+
+hasheaders = BooleanVar()
+hasheaders.set(False)
+headercheckbox = ttk.Checkbutton(headerframe, text="Headers?", variable=hasheaders)
+headercheckbox.grid(row=0, column=0, sticky=W, padx=10, pady=5)
+
+# Input Delimiter
+delimiterframe = ttk.LabelFrame(mainframe, text="Select the delimiter:", padding=10)
+delimiterframe.grid(row=3, column=0, sticky=W, rowspan=2)
+
+delimiter = StringVar()
+delimiter.set(",")
+rb1 = ttk.Radiobutton(delimiterframe, text=",",value=",",variable=delimiter)
+rb1.grid(row=0, column=0, sticky=W, padx=10)
+
+rb1 = ttk.Radiobutton(delimiterframe, text=";",value=";",variable=delimiter)
+rb1.grid(row=1, column=0, sticky=W, padx=10)
+
+# Input Column No.
+columnframe = ttk.LabelFrame(mainframe, text="In which column are the HEX EPCs?:", padding=10)
+columnframe.grid(row=6, column=0, sticky=W)
+column = StringVar()
+column.set(1)
+columnentry = ttk.Entry(columnframe, textvariable=column, width=1)
+columnentry.grid(row=0, column=0, sticky=W, padx=10)
+
+# Convert Button
+csvconvertbutton = ttk.Button(mainframe, text="Convert", command=convert)
+csvconvertbutton.grid(row=8, column=0, sticky=W)
 
 # Exit Button
-ttk.Button(mainframe, text="Exit", command=root.destroy).grid(row=2, column=0)
+exitbutton = ttk.Button(mainframe, text="Exit", command=root.destroy)
+exitbutton.grid(row=8, column=1, sticky=W)
+
 root.mainloop()
 
 # Input CSV File Path
@@ -86,11 +122,11 @@ root.mainloop()
 #filename = "hex.csv"
 
 #hasheaders = messagebox.askyesno("CSV Headers", "Does the CSV-File contain headers?")
-hasheaders = True
+#hasheaders = True
 
 # Input CSV Delimiter
 #delimiter = simpledialog.askstring("CSV Delimiter", "Which delimiter is used?")
-delimiter = ','
+#delimiter = ','
 
 # Input HEX EPC Column
 #column = simpledialog.askinteger("EPC Column", "In which column are the Hex EPCs?")
